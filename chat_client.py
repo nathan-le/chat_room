@@ -8,6 +8,7 @@ class ChatClient(object):
         self.name = name
         self.address = address
         self.port = int(port)
+        self.channel = None
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.settimeout(2)
         try:

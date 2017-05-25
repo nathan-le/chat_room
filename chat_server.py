@@ -7,10 +7,10 @@ class ChatServer(object):
 
     def __init__(self, port):
         self.port = int(port)
-        self.users = []
-        self.channels = []
-        self.addr = {}
-        self.connection_list = []
+        self.users = [] #list of clients on this server
+        self.channels = {} #list of chat channels
+        self.addr = {} #dictionary of key=addr to value=username
+        self.connection_list = [] #list of users' sockets
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def sendToAll(self, sock, message):
@@ -42,17 +42,24 @@ class ChatServer(object):
                     self.addr[addr[1]] = sockfd.recv(RECV_BUFFER)
 
                     print "%s connected" % self.addr[addr[1]]
-                    self.sendToAll(sockfd, "%s entered room\n" % self.addr[addr[1]])
+                    self.sendToAll(sockfd, "\n%s entered room\n" % self.addr[addr[1]])
                 
                 #incoming message from client
                 else:
                     try:
                         data = sock.recv(RECV_BUFFER)
                         if data:
-                            self.sendToAll(sock, "\r" + '[' + self.addr[sock.getpeername()[1]] + '] ' + data)
+                            if '/create' == data[0:7]:
+                                sock.send("\ncreate\n")
+                            elif '/join' == data[0:5]:
+                                sock.send("\njoin\n")
+                            elif '/list' == data[0:5]:
+                                sock.send("\nlist\n")
+                            else:
+                                self.sendToAll(sock, "\r" + '[' + self.addr[sock.getpeername()[1]] + '] ' + data)
                     
                     except:
-                        self.sendToAll(sock, "Client (%s, %s) if offline" %addr)
+                        self.sendToAll(sock, "\n%s is offline\n" % self.addr[addr[1]])
                         sock.close()
                         self.connection_list.remove(sock)
                         continue
